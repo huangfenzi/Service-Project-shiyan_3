@@ -1,0 +1,53 @@
+server:
+  port: 16000
+spring:
+  application:
+    name: "consumer-server"
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: "${spring.cloud.client.ip-address}:${server.port}"
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 15
+  client:
+    service-url:
+      defaultZone: "http://eurekaServer18000:18000/eureka/,http://eurekaServer18001:18001/eureka/"
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      instanceA:
+        slidingWindowSize: 5
+        minimumNumberOfCalls: 5
+        waitDurationInOpenState: 5000
+        permittedNumberOfCallsInHalfOpenState: 3
+        failureRateThreshold: 30
+      instanceB:
+        slidingWindowSize: 5
+        minimumNumberOfCalls: 5
+        waitDurationInOpenState: 5000
+        permittedNumberOfCallsInHalfOpenState: 3
+        failureRateThreshold: 50
+        slowCallRateThreshold: 30
+        slowCallDurationThreshold: 2000
+
+  bulkhead:
+    configs:
+      default:
+        max-concurrent-calls: 10
+        max-wait-duration: 20ms
+
+    instances:
+      bulkhead1:
+        base-config: default
+  resilience4j:
+    ratelimiter:
+      configs:
+        default:
+          limit-for-period: 5
+          limit-refresh-period: 2s
+          timeout-duration: 1s  # Optional, adjust as needed
+
+      instances:
+        rate1:
+          base-config: default
